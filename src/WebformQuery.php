@@ -5,7 +5,7 @@ namespace Drupal\webform_query;
 use Drupal\Core\Database\Connection;
 
 class WebformQuery {
-  
+
   /**
    * @var \Drupal\Core\Database\Connection; 
    */
@@ -59,11 +59,17 @@ class WebformQuery {
         $operator = '=';
       }
 
-      $this->conditions[] = [
-        'field' => $field,
-        'value' => $value,
-        'operator' => $operator,
-      ];
+      // Validate opertaor.
+      $operator = $this->validateOperator($operator);
+
+      // If operator is good then add the condition.
+      if ($operator != '') {
+        $this->conditions[] = [
+          'field' => $field,
+          'value' => $value,
+          'operator' => $operator,
+        ];
+      }
     }
 
     return $this;
@@ -91,7 +97,7 @@ class WebformQuery {
    * Build the query from the conditions.
    */
   public function buildQuery() {
-    $query = 'SELECT DISTINCT sid FROM webform_submission_data wsd';
+    $query = 'SELECT DISTINCT sid FROM {webform_submission_data} wsd';
     $values = [];
     foreach ($this->conditions as $key => $condition) {
       // Check if it's the first condition.
@@ -108,7 +114,7 @@ class WebformQuery {
       else {
         // Normal condition for a webform submission field.
         $alias = 'wsd' . $key;
-        $query .= ' AND sid IN (SELECT sid from webform_submission_data ' . $alias . ' WHERE ' . $alias . '.name = :' . $condition['field'] . '_name';
+        $query .= ' AND sid IN (SELECT sid from {webform_submission_data} ' . $alias . ' WHERE ' . $alias . '.name = :' . $condition['field'] . '_name';
         $query .= ' AND ' . $alias . '.value ' . $condition['operator'] . ' :' . $condition['field'] . ')';
         $values[':' . $condition['field'] .'_name'] = $condition['field'];
       }
@@ -118,7 +124,21 @@ class WebformQuery {
     return ['query' => $query, 'values' => $values];
     
   }
-  
-  
+
+  /**
+   * 
+   * Perform basic validation of the operator.
+   * 
+   * @param string $operator
+   * @return string
+   *  Return operator or nothing.   
+   */
+  public function validateOperator($operator) {
+    if (stripos($operator, 'UNION') !== FALSE || strpbrk($operator, '[-\'"();') !== FALSE) {      
+      trigger_error('Invalid characters in query operator: ' . $operator, E_USER_ERROR);
+      return '';      
+    }
+    return $operator;
+  }
 
 }
