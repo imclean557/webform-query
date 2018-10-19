@@ -63,7 +63,7 @@ class WebformQuery {
       $operator = $this->validateOperator($operator);
 
       // If operator is good then add the condition.
-      if ($operator != '') {
+      if ($operator !== '') {
         $this->conditions[] = [
           'field' => $field,
           'value' => $value,
