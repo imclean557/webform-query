@@ -34,11 +34,16 @@ class WebformQuery {
     }      
   }
     
-  /**   
-   * Get current staff shift for the user ID.
+  /**
    * 
-   * @param int $uid
-   *  User ID
+   * @param string $field
+   *  Field name.
+   * @param mixed $value
+   *  Value to compare.
+   * @param type $operator
+   *  Operator.
+   * 
+   * @return $this
    */
   public function addCondition($field, $value = NULL, $operator = '=') {
     // Check for webform_id.
