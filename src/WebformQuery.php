@@ -91,6 +91,9 @@ class WebformQuery {
     // Generate query elements from the conditions.
     $query_elements = $this->buildQuery();
     
+    // Clear the conditions.
+    $this->conditions = [];
+
     // Execute the query.
     $response = $this->connection->query($query_elements['query'], $query_elements['values']);
 
