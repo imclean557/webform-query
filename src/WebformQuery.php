@@ -10,14 +10,21 @@ class WebformQuery {
    * @var \Drupal\Core\Database\Connection; 
    */
   protected $connection;
-  
+
   /**
    * Array of conditions.
    *
    * @var array
    */
   protected $conditions = [];
-  
+
+  /**
+   * Array of sort conditions.
+   *
+   * @var array
+   */
+  protected $sort = [];
+
   /**
    * {@inheritdoc}
    */
@@ -80,6 +87,19 @@ class WebformQuery {
     return $this;
   }
 
+  public function orderBy($field, $direction = 'ASC') {
+    // Make sure direction is valid.
+    $direction = ($direction !== 'ASC') ? 'DESC' : 'ASC';
+
+    $this->sort[] = [
+      'field' => $field,
+      'direction' => $direction,
+    ];
+
+    return $this;
+
+  }
+
   /**
    * 
    * Execute the query.
@@ -91,8 +111,9 @@ class WebformQuery {
     // Generate query elements from the conditions.
     $query_elements = $this->buildQuery();
     
-    // Clear the conditions.
+    // Clear the conditions and sorting.
     $this->conditions = [];
+    $this->sort = [];
 
     // Execute the query.
     $response = $this->connection->query($query_elements['query'], $query_elements['values']);
@@ -100,7 +121,7 @@ class WebformQuery {
     // Return the results.
     return $response->fetchAll();        
   }
-  
+
   /**
    * Build the query from the conditions.
    */
@@ -128,9 +149,25 @@ class WebformQuery {
       }
       $values[':' . $condition['field']] = $condition['value'];
     }
-    
+
+    // Check for sort criteria.
+    foreach ($this->sort as $key => $orderby) {
+      // Add comma separator for for additional ORDER BY.
+      if ($key > 0) {
+        $query  .= ',';
+      }
+      // "obt": Order By Table.
+      $orderby_alias = 'obt' . $key;
+
+      $query .= ' ORDER BY ('
+        . 'SELECT ' . $orderby_alias . '.value FROM {webform_submission_data} ' . $orderby_alias 
+        . ' WHERE ' . $orderby_alias . '.name=\'' . $orderby['field'] . '\''
+        . ' AND ' . $orderby_alias . '.sid=wsd.sid'
+        . ') ' . $orderby['direction'];
+    }
+
     return ['query' => $query, 'values' => $values];
-    
+
   }
 
   /**
