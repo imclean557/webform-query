@@ -23,7 +23,7 @@ The return type is an array of objects with a single property `sid`, the submiss
     $query->addCondition('event', 1);
     $results = $query->execute()
 
-Sort the results by the values of a Webform field:
+Sort the results:
 
     $query = \Drupal::service('webform_query');
 
