@@ -22,3 +22,13 @@ The return type is an array of objects with a single property `sid`, the submiss
 
     $query->addCondition('event', 1);
     $results = $query->execute()
+
+Sort the results by the values of a Webform field:
+
+    $query = \Drupal::service('webform_query');
+
+    $query->addCondition('event', 1);
+    $query->orderBy('age', 'DESC');
+    $results = $query->execute()
+
+"ASC" is used if the second parameter is missing.
