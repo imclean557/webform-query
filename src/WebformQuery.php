@@ -37,8 +37,9 @@ class WebformQuery {
    */
   public function setWebform($webform_id = NULL) {
     if (!is_null($webform_id)) {
-      return $this->addCondition('webform_id', $webform_id);
+      $this->addCondition('webform_id', $webform_id);
     }      
+    return $this;
   }
     
   /**
