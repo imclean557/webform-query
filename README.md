@@ -30,7 +30,7 @@ value of the `event` field is 1:
     $query->addCondition('event', 1);
     $results = $query->execute()
 
-Sort the results:
+**Sort the results**
 
     $query = \Drupal::service('webform_query');
 
@@ -39,3 +39,32 @@ Sort the results:
     $results = $query->execute()
 
 "ASC" is used if the second parameter is missing.
+
+**Query other tables**
+
+Querying other tables which include a sid column is now possible. This is useful
+ for querying the webform_submission table to filter by user, date submitted and
+ other base fields.
+
+`addCondition()` accepts a table name as an optional third parameter.
+
+These tables are queried before webform_submission_data to improve performance.
+
+    $query = \Drupal::service('webform_query');
+
+    $query->addCondition('event', 1)    
+          ->setWebform('event_registration')
+          ->addCondition('uid', 1, '=', 'webform_submission');
+    $results = $query->execute();
+
+**Additional result types**
+
+The method `processQuery()` returns `Drupal\Core\Database\Statement` which
+ allows for different result types.
+
+    $query = \Drupal::service('webform_query');
+
+    $query->addCondition('event', 1)    
+          ->setWebform('event_registration')
+          ->addCondition('uid', 1, '=', 'webform_submission');
+    $results = $query->processQuery()->fetchCol();
