@@ -112,14 +112,17 @@ class WebformQuery {
    *   The field to sort by.
    * @param string $direction
    *   The direction to sort.
+   * @param string $table
+   *   The table to query.
    */
-  public function orderBy($field, $direction = 'ASC') {
+  public function orderBy($field, $direction = 'ASC', $table = 'webform_submission_data') {
     // Make sure direction is valid.
     $direction = ($direction !== 'ASC') ? 'DESC' : 'ASC';
 
     $this->sort[] = [
       'field' => $field,
       'direction' => $direction,
+      'table' => $table,
     ];
 
     return $this;
@@ -182,11 +185,20 @@ class WebformQuery {
       // Add comma separator for for additional ORDER BY.
       if ($key > 0) {
         $query .= ',';
+        $ob_prefix = '';
+      }
+      else {
+        $ob_prefix = ' ORDER BY';
       }
       // "obt": Order By Table.
       $orderby_alias = 'obt' . $key;
 
-      $query .= ' ORDER BY (SELECT ' . $orderby_alias . '.value FROM {webform_submission_data} ' . $orderby_alias . ' WHERE ' . $orderby_alias . '.name=\'' . $orderby['field'] . '\' AND ' . $orderby_alias . '.sid=wsd.sid) ' . $orderby['direction'];
+      if ($orderby['table'] === 'webform_submission_data') {
+        $query .= $ob_prefix . ' (SELECT ' . $orderby_alias . '.value FROM {webform_submission_data} ' . $orderby_alias . ' WHERE ' . $orderby_alias . '.name=\'' . $orderby['field'] . '\' AND ' . $orderby_alias . '.sid=ws.sid) ' . $orderby['direction'];
+      }
+      else {
+        $query .= $ob_prefix . ' (SELECT ' . $orderby_alias . '.' . $orderby['field'] . ' FROM {' . $orderby['table'] . '} ' . $orderby_alias . ' WHERE ' . $orderby_alias . '.sid=ws.sid) ' . $orderby['direction'];
+      }
     }
 
     $query = substr_replace($query, ' WHERE', 0, 4);
