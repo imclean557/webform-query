@@ -2,6 +2,6 @@ name: Webform Query
 type: module
 description: Query webform submission data.
 package: Webform
-core: '8.x'
+core_version_requirement: ^8 || ^9
 dependencies:
   - webform:webform
