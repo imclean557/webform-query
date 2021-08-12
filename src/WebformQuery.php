@@ -31,6 +31,13 @@ class WebformQuery {
   protected $sort = [];
 
   /**
+   * Array of MIN() and MAX() functions.
+   *
+   * @var array
+   */
+  protected $minmax = [];
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(Connection $connection) {
@@ -130,6 +137,30 @@ class WebformQuery {
   }
 
   /**
+   * Add MIN or MAX function to the query. Only works with the submission ID.
+   * 
+   * @param string $function
+   *   The function name, MIN or MAX.
+   * @param string $table
+   *   The table of the field.
+   * @param string $group_by
+   *   Optional field to group results. E.g. " webform_id";
+   */
+  public function addMinMax($function, $table = 'webform_submission', $group_by = '') {
+    if ($function !== 'MIN') {
+      $function = 'MAX';
+    }
+
+    $this->minmax[] = [
+      'function' => $function,
+      'table' => $table,
+      'group_by' => $group_by,
+    ];
+
+    return $this;
+  }
+
+  /**
    * Execute the query.
    *
    * @return array
@@ -150,9 +181,10 @@ class WebformQuery {
     // Generate query elements from the conditions.
     $query_elements = $this->buildQuery();
 
-    // Clear the conditions and sorting.
+    // Clear the conditions, sorting and min/max.
     $this->conditions = [];
     $this->sort = [];
+    $this->minmax = [];
 
     // Execute the query.
     return $this->connection->query($query_elements['query'], $query_elements['values']);
@@ -195,6 +227,17 @@ class WebformQuery {
       else {
         $values[':' . $condition['field'] . $key] = $condition['value'];
       }
+    }
+
+    // Check for MIN/MAX functions.
+    foreach ($this->minmax as $key => $function) {
+      // "et": Expression Table.
+      $minmax_alias = 'mm' . $key;
+      $query .= ' AND sid IN (SELECT ' . $function['function'] . '(' . $minmax_alias . '.sid) FROM {' . $function['table'] . '} ' . $minmax_alias;
+      if ($function['group_by'] !== '') {
+        $query .= ' GROUP BY ' . $function['group_by'];
+      }
+      $query .= ')';
     }
 
     // Check for sort criteria.
