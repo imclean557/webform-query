@@ -169,15 +169,32 @@ class WebformQuery {
 
       // Check if querying the results table.
       if ($condition['table'] !== 'webform_submission_data') {
-        $query = ' AND sid IN (SELECT sid FROM {' . $condition['table'] . '} ' . $alias . ' WHERE ' . $alias . '.' . $condition['field'] . ' ' . $condition['operator'] . ' :' . $condition['field'] . $key . ')' . $query;
+        if (is_array($condition['value'])) {
+          $query = ' AND sid IN (SELECT sid FROM {' . $condition['table'] . '} ' . $alias . ' WHERE ' . $alias . '.' . $condition['field'] . ' ' . $condition['operator'] . ' (:' . $condition['field'] . $key . '[]))' . $query;
+        }
+        else {
+          $query = ' AND sid IN (SELECT sid FROM {' . $condition['table'] . '} ' . $alias . ' WHERE ' . $alias . '.' . $condition['field'] . ' ' . $condition['operator'] . ' :' . $condition['field'] . $key . ')' . $query;
+        }
       }
       else {
         // Normal condition for a webform submission field.
-        $query .= ' AND sid IN (SELECT sid FROM {webform_submission_data} ' . $alias . ' WHERE ' . $alias . '.name = :' . $condition['field'] . '_name' . $key;
-        $query .= ' AND ' . $alias . '.value ' . $condition['operator'] . ' :' . $condition['field'] . $key . ')';
-        $values[':' . $condition['field'] . '_name' . $key] = $condition['field'];
+        if (is_array($condition['value'])) {
+          $query .= ' AND sid IN (SELECT sid FROM {webform_submission_data} ' . $alias . ' WHERE ' . $alias . '.name = :' . $condition['field'] . '_name' . $key;
+          $query .= ' AND ' . $alias . '.value ' . $condition['operator'] . ' (:' . $condition['field'] . $key . '[]))';
+          $values[':' . $condition['field'] . '_name' . $key] = $condition['field'];
+        }
+        else {
+          $query .= ' AND sid IN (SELECT sid FROM {webform_submission_data} ' . $alias . ' WHERE ' . $alias . '.name = :' . $condition['field'] . '_name' . $key;
+          $query .= ' AND ' . $alias . '.value ' . $condition['operator'] . ' :' . $condition['field'] . $key . ')';
+          $values[':' . $condition['field'] . '_name' . $key] = $condition['field'];
+        }
       }
-      $values[':' . $condition['field'] . $key] = $condition['value'];
+      if (is_array($condition['value'])) {
+        $values[':' . $condition['field'] . $key . '[]'] = $condition['value'];
+      }
+      else {
+        $values[':' . $condition['field'] . $key] = $condition['value'];
+      }
     }
 
     // Check for sort criteria.
